@@ -1,7 +1,7 @@
 const mongo = require('mongoose')
 
 
-     mongo.connect('mongodb+srv://admin:tejashvi_brahman@cluster0.6sd2h.mongodb.net/todo-database')
+     mongo.connect('mongodb+srv://<admin>:<db-password>@cluster0.6sd2h.mongodb.net/todo-database')
        
 
 const Schema = mongo.Schema;
