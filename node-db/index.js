@@ -24,6 +24,13 @@ app.post('/signup', async function (req,res) {
         message : "You are Sign-uped"
     })
 })
+
+app.get('/users',async function(req,res){ // this the db call to show all the users on the frontend which are registered in the database
+    const UsersData = await UserModel.find();
+    res.json(UsersData)
+    console.log(UsersData);
+    
+})
 app.post('/login', async function (req,res) {
     const email = req.body.email;
     const password = req.body.password;
