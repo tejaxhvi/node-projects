@@ -1,7 +1,7 @@
 const bcrypt = require("bcrypt")
 const express = require('express')
 const app = express()
-const zod = require('zod')
+const z = require('zod')
 const jwt = require('jsonwebtoken')
 const JWT_SECRET = "lordtejashvi"
 
@@ -12,34 +12,65 @@ const { UserModel , TodoModel} = require('./db')
 // app.use(express.static('frontend'))  //this will the static files on server but i don't want  , i want different static frontend on each diff routes of express 
 
 app.post('/signup', async function (req,res) {
-     
+
     const name = req.body.name;
     const email = req.body.email;
     const password = req.body.password;
 
-    const hashpassword =  await bcrypt.hash(password , 5)
+    // This is zod provided validating schema 
+   
+    const UsersInfo = z.object({
+        name : z.string().min(3, { message: "Must be 3 or more characters long" }).max(10),
+        email : z.string().email({message: "This is incorrect Email"}).max(20,{message: "Email is too Long"} ) , 
+        password : z.string().min(3,{message : "Password is too short"}).max(20 , {message: "Password is too long"})
+    })
 
-    await UserModel.create({ // this is db call which may be fail , so it's good to make it promise
-        name : name , 
-        email : email,
-        password : hashpassword 
-    })
-    console.log(hashpassword);
-    
-    
-    res.json({
-        message : "You are Signed up"
-    })
+    const ParsedUsersInfo = UsersInfo.safeParse(req.body);
+    if(!ParsedUsersInfo.success ){
+        res.json({
+            message : "Incorrect credentials",
+            error : ParsedUsersInfo.error            // this response will give all info if any individual input field is incorrect
+        })
+        ParsedUsersInfo.error.errors.forEach((err) => {
+            console.log(`Field: ${err.path[0]}, Message: ${err.message}`) 
+             // This is best way to show where the problem in UsersInfo and show it on frontend
+        })
+    }
+    else{
+        try { // this try catch will save server to crash when user already exists
+            const hashpassword =  await bcrypt.hash(password , 5)
+            // console.log(hashpassword); // it should declare before database call either it throws error
+
+            await UserModel.create({ // this is db call which may be fail , so it's good to make it promise
+            email : email,
+            name : name , 
+            password : hashpassword 
+            })
+                // if this database call not in else function then this store the UsersInfo in db even if it's false
+
+                //this response is imp else the frontend request keep going
+            res.json({ 
+                message : "You are signed up"
+            })
+            //console.log("user signed up");
+              
+        } catch (error) {
+            res.json({
+                message: "User already exists"
+            })
+        }
+    }
 })
 
 app.post('/login', async function (req,res) {
     const email = req.body.email;
+    const password = req.body.password;
 
     const user = await UserModel.findOne({
-        email : email,
+        email : email
     })
 
-    const HashedCompare = bcrypt.compare(hashpassword , user.password)
+    const HashedCompare = bcrypt.compare(password , user.password)
     if(HashedCompare){
         const token = jwt.sign({
             id : user._id
