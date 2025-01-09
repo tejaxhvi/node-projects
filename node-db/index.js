@@ -75,6 +75,9 @@ app.post('/login', async function (req,res) {
         const token = jwt.sign({
             id : user._id
         }, JWT_SECRET)
+        res.json({
+            token : token
+        })
      }
     else{
         res.json({
@@ -84,11 +87,50 @@ app.post('/login', async function (req,res) {
 
 })
 
-app.get('/users',async function(req,res){ 
+// this route can allow users who are signed up and signed in to create todo 
 
-
-    res.sendFile(__dirname + "/frontend/users.html") // for now this works as routing bcz i can't understand routing in html maybe there isn't 
+app.post('/todo',async function (req,res) { 
+    const token = req.headers.token;
+    const title = req.body.title;
+    const done = req.body.done;
     
+    const verify = jwt.verify(token, JWT_SECRET)
+    const UserTodo = jwt.decode(token ,JWT_SECRET) 
+     const userId = UserTodo.id;    // the decoded value returned can be retreived by id
+     //console.log(userId);
+    
+    if(verify){
+        await TodoModel.create({
+            userId : userId,
+            title : title,
+            done : done    // even a space problem from frontend 
+        })
+        res.json({
+            message : "Todo is Created "
+        })
+    }else{
+        res.json({
+            message : "Incorrect Credentials"
+        })
+    }
+})
+
+app.get('/todos',function (req,res) {
+        const token = req.headers.token;
+        
+        const verify = jwt.verify(token, JWT_SECRET)
+        const UsersTodo = 
+        const TodoData = TodoModel.findById
+
+        if(verify){
+            res.json()
+        }
+        
+})
+
+// This is endpoint shows all the users who are currently registered
+app.get('/users',async function(req,res){ 
+   
     const UsersData = await UserModel.find();
 
     res.json({UsersData})
@@ -101,22 +143,5 @@ app.get('/user',async function(req,res){  // backend part
 
     res.json({UsersData}) // for now this works as routing bcz i can't understand routing in html maybe there isn't 
 })
-
-
-app.post('/todo',function (req,res) {
-    const token = req.body.token;
-    
-    const verify = jwt.verify(token, JWT_SECRET)
-
-    if(verify){
-
-        
-    }
-})
-
-app.get('/todos',function (req,res) {
-    
-})
-
 
 app.listen(3000)
