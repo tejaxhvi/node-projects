@@ -115,15 +115,25 @@ app.post('/todo',async function (req,res) {
     }
 })
 
-app.get('/todos',function (req,res) {
+app.get('/todos',async function (req,res) {
         const token = req.headers.token;
         
         const verify = jwt.verify(token, JWT_SECRET)
-        const UsersTodo = 
-        const TodoData = TodoModel.findById
-
+        const UsersTodo = jwt.decode(token , JWT_SECRET)
+        const userId = UsersTodo.id;
+        //console.log(userId);
+        const TodoData = await TodoModel.find({userId : userId}); // .find() is better and replacable by .findById()
+        //console.log(TodoData[2].title);
+       
         if(verify){
-            res.json()
+            const todos = TodoData.map(todo => ({ // fuck my javascript logic need to copy from chatgpt , need to revise js asap
+                title: todo.title,
+                done: todo.done
+            }));
+            
+            res.json(todos)
+        }else{
+            res.json({message : "Wrong Token , You need to Sign-Up"})
         }
         
 })
